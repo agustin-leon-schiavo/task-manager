@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0f172a;
+  --color-foreground: #f8fafc;
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-secondary: #1e293b;
+  --color-accent: #818cf8;
+  --color-error: #ef4444;
+  --color-success: #10b981;
+}
+
+:root {
+  --card-bg: rgba(30, 41, 59, 0.7);
+  --border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* Forzamos el cursor de mano en elementos interactivos */
+button, a, select {
+  cursor: pointer;
+}
+
+/* Glassmorphism Effect */
+.glass {
+  background: var(--card-bg);
+  @apply backdrop-blur-xl rounded-[24px] shadow-2xl;
+  border: 1px solid var(--border);
+}
+
+/* Premium Inputs */
+input {
+  @apply w-full px-4 py-3 bg-slate-950 border border-white/10 rounded-xl text-white text-base transition-all duration-300;
+}
+
+.input-icon {
+  padding-left: 3rem !important;
+}
+
+input::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+
+input:focus::placeholder {
+  opacity: 0.3;
+}
+
+input:focus {
+  @apply outline-none border-indigo-500 ring-2 ring-indigo-500/20;
+}
+
+/* Premium Buttons */
+.btn-primary {
+  @apply cursor-pointer px-6 py-3 rounded-xl font-semibold text-base transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: white;
+}
+
+.btn-primary:hover {
+  @apply -translate-y-0.5 shadow-lg shadow-indigo-500/30;
+}
