@@ -38,7 +38,7 @@ task-manager/
 
 ### 1. Clonar el repositorio
 ```bash
-git clone <tu-url-de-github>
+git clone <https://github.com/agustin-leon-schiavo/task-manager.git>
 cd task-manager
 ```
 
