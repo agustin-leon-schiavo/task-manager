@@ -14,9 +14,9 @@ export class Task extends Model {
   @Column(DataType.TEXT)
   description?: string;
 
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  completed!: boolean;
+  @Default('todo')
+  @Column(DataType.ENUM('todo', 'in-progress', 'done'))
+  status!: 'todo' | 'in-progress' | 'done';
 
   @Default('medium')
   @Column(DataType.ENUM('low', 'medium', 'high'))
@@ -24,6 +24,9 @@ export class Task extends Model {
 
   @Column(DataType.STRING)
   fileUrl?: string;
+
+  @Column(DataType.DATEONLY)
+  dueDate?: string;
 
   @ForeignKey(() => User)
   @Column(DataType.UUID)

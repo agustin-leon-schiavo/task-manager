@@ -17,18 +17,23 @@ import {
   Pencil
 } from 'lucide-react';
 import TaskModal from '@/components/TaskModal';
+import KanbanBoard from '@/components/KanbanBoard';
+import { useLanguage } from '@/context/LanguageContext';
+import { Globe } from 'lucide-react';
 
 interface Task {
   id: string;
   title: string;
   description: string;
-  completed: boolean;
+  status: 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high';
+  dueDate?: string;
   fileUrl?: string;
 }
 
 export default function Dashboard() {
   const { user, logout, loading } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -73,12 +78,15 @@ export default function Dashboard() {
     }
   };
 
-  const toggleComplete = async (task: Task) => {
+  const handleTaskMove = async (taskId: string, newStatus: Task['status']) => {
+    // Actualización optimista
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    
     try {
-      await api.put(`/tasks/${task.id}`, { completed: !task.completed });
-      fetchTasks(); // Refrescar lista
+      await api.put(`/tasks/${taskId}`, { status: newStatus });
     } catch (error) {
-      console.error('Error toggling task:', error);
+      console.error('Error updating task status:', error);
+      fetchTasks(); // Revertir en caso de error
     }
   };
 
@@ -109,16 +117,24 @@ export default function Dashboard() {
     );
   }
 
+  const pendingTasksCount = tasks.filter(t => t.status !== 'done').length;
+  const username = user.email.split('@')[0];
+  const capitalizedUsername = username.charAt(0).toUpperCase() + username.slice(1);
+
   return (
     <div className="max-w-6xl mx-auto p-6 w-full">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-            Hola, {user.email.split('@')[0]}
+            {t('greeting')}, {capitalizedUsername}
           </h1>
           <p className="text-slate-400 mt-1">
-            Tienes {tasks.length} {tasks.length === 1 ? 'tarea pendiente' : 'tareas pendientes'}
+            {pendingTasksCount === 0 
+              ? t('pending_tasks_zero')
+              : pendingTasksCount === 1 
+                ? t('pending_tasks_one') 
+                : t('pending_tasks_many', { count: pendingTasksCount })}
           </p>
         </div>
         
@@ -128,22 +144,30 @@ export default function Dashboard() {
             className="btn-primary"
           >
             <Plus size={20} />
-            Nueva Tarea
+            {t('new_task')}
           </button>
           <Link 
             href="/trash"
             className="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 transition-all border border-white/5"
-            title="Papelera"
+            title={t('trash')}
           >
             <Trash2 size={20} />
-            <span className="font-medium">Papelera</span>
+            <span className="font-medium hidden sm:inline">{t('trash')}</span>
           </Link>
+          <button 
+            onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+            className="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all border border-white/5"
+            title={language === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+          >
+            <Globe size={20} />
+            <span className="font-medium uppercase">{language}</span>
+          </button>
           <button 
             onClick={logout}
             className="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all border border-white/5"
           >
             <LogOut size={20} />
-            <span className="font-medium">Salir</span>
+            <span className="font-medium hidden sm:inline">{t('logout')}</span>
           </button>
         </div>
       </header>
@@ -154,7 +178,7 @@ export default function Dashboard() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input 
             type="text" 
-            placeholder="Buscar tareas..." 
+            placeholder={t('search_placeholder')}
             className="input-icon"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -167,84 +191,25 @@ export default function Dashboard() {
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
           >
-            <option value="">Todas las prioridades</option>
-            <option value="high">Alta</option>
-            <option value="medium">Media</option>
-            <option value="low">Baja</option>
+            <option value="">{t('all_priorities')}</option>
+            <option value="high">{t('priority_high')}</option>
+            <option value="medium">{t('priority_medium')}</option>
+            <option value="low">{t('priority_low')}</option>
           </select>
         </div>
       </div>
 
-      {/* Lista de Tareas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Lista de Tareas (Kanban) */}
+      <div className="mt-8">
         {fetching ? (
-          <p className="text-slate-500 col-span-full text-center py-10">Actualizando tareas...</p>
-        ) : tasks.length > 0 ? (
-          tasks.map(task => (
-            <div key={task.id} className="glass p-6 hover:border-indigo-500/50 transition-all group flex flex-col h-full">
-              <div className="flex justify-between items-start mb-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                  task.priority === 'high' ? 'bg-red-500/20 text-red-400' :
-                  task.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' :
-                  'bg-emerald-500/20 text-emerald-400'
-                }`}>
-                  {task.priority}
-                </span>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={() => handleEdit(task)}
-                    className="text-slate-500 hover:text-indigo-400 transition-colors"
-                    title="Editar"
-                  >
-                    <Pencil size={18} />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(task.id)}
-                    className="text-slate-500 hover:text-red-400 transition-colors"
-                    title="Borrar"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-              
-              <h3 className={`text-xl font-semibold mb-2 ${task.completed ? 'line-through text-slate-500' : 'text-white'}`}>
-                {task.title}
-              </h3>
-              <p className="text-slate-400 text-sm mb-6 line-clamp-2">
-                {task.description || 'Sin descripción'}
-              </p>
-
-              <div className="flex items-center justify-between mt-auto">
-                <button 
-                  onClick={() => toggleComplete(task)}
-                  className="flex items-center gap-2 text-slate-500 text-sm hover:text-white transition-colors"
-                >
-                  {task.completed ? (
-                    <CheckCircle2 className="text-emerald-500" size={18} />
-                  ) : (
-                    <Clock size={18} />
-                  )}
-                  <span>{task.completed ? 'Completada' : 'Pendiente'}</span>
-                </button>
-                
-                {task.fileUrl && (
-                  <a 
-                    href={task.fileUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-indigo-400 hover:text-indigo-300 transition-colors"
-                  >
-                    <Paperclip size={18} />
-                  </a>
-                )}
-              </div>
-            </div>
-          ))
+          <p className="text-slate-500 text-center py-10">{t('updating_tasks')}</p>
         ) : (
-          <div className="col-span-full text-center py-20 glass">
-            <p className="text-slate-400">No se encontraron tareas</p>
-          </div>
+          <KanbanBoard 
+            tasks={tasks} 
+            onTaskMove={handleTaskMove}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         )}
       </div>
 

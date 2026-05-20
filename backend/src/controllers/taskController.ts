@@ -5,7 +5,7 @@ import { AuthRequest } from '../middlewares/authMiddleware';
 import { Op } from 'sequelize';
 
 export const getAllTasks = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { search, priority, completed } = req.query;
+  const { search, priority, status } = req.query;
 
   const where: any = { userId: req.user?.id };
   if (search) {
@@ -14,8 +14,8 @@ export const getAllTasks = asyncHandler(async (req: AuthRequest, res: Response) 
   if (priority) {
     where.priority = priority;
   }
-  if (completed !== undefined) {
-    where.completed = completed === 'true';
+  if (status) {
+    where.status = status;
   }
 
   const tasks = await Task.findAll({ 
@@ -38,7 +38,7 @@ export const getDeletedTasks = asyncHandler(async (req: AuthRequest, res: Respon
 });
 
 export const createTask = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { title, description, priority, userId } = req.body;
+  const { title, description, priority, status, dueDate, userId } = req.body;
   const targetUserId = (req.user?.role === 'admin' && userId) ? userId : req.user?.id;
   const fileUrl = req.file ? req.file.path : null;
 
@@ -46,6 +46,8 @@ export const createTask = asyncHandler(async (req: AuthRequest, res: Response) =
     title, 
     description, 
     priority,
+    status,
+    dueDate: dueDate || null,
     userId: targetUserId,
     fileUrl
   } as any);
@@ -55,7 +57,7 @@ export const createTask = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const updateTask = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { title, description, completed, priority, userId } = req.body;
+  const { title, description, status, priority, dueDate, userId } = req.body;
   
   const task = await Task.findOne({
     where: { id: id as string, userId: req.user?.id }
@@ -66,7 +68,13 @@ export const updateTask = asyncHandler(async (req: AuthRequest, res: Response) =
     return;
   }
 
-  const updateData: any = { title, description, completed, priority };
+  const updateData: any = { 
+    title, 
+    description, 
+    status, 
+    priority,
+    dueDate: dueDate || null
+  };
   if (req.user?.role === 'admin' && userId) updateData.userId = userId;
   if (req.file) updateData.fileUrl = req.file.path;
 
