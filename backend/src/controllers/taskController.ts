@@ -38,9 +38,11 @@ export const getDeletedTasks = asyncHandler(async (req: AuthRequest, res: Respon
 });
 
 export const createTask = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { title, description, priority, status, dueDate, userId } = req.body;
+  const { title, description, priority, status, dueDate, subtasks, userId } = req.body;
   const targetUserId = (req.user?.role === 'admin' && userId) ? userId : req.user?.id;
   const fileUrl = req.file ? req.file.path : null;
+
+  const parsedSubtasks = subtasks ? (typeof subtasks === 'string' ? JSON.parse(subtasks) : subtasks) : [];
 
   const newTask = await Task.create({ 
     title, 
@@ -48,6 +50,7 @@ export const createTask = asyncHandler(async (req: AuthRequest, res: Response) =
     priority,
     status,
     dueDate: dueDate || null,
+    subtasks: parsedSubtasks,
     userId: targetUserId,
     fileUrl
   } as any);
@@ -57,7 +60,7 @@ export const createTask = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const updateTask = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { title, description, status, priority, dueDate, userId } = req.body;
+  const { title, description, status, priority, dueDate, subtasks, userId } = req.body;
   
   const task = await Task.findOne({
     where: { id: id as string, userId: req.user?.id }
@@ -68,6 +71,10 @@ export const updateTask = asyncHandler(async (req: AuthRequest, res: Response) =
     return;
   }
 
+  const parsedSubtasks = subtasks !== undefined 
+    ? (typeof subtasks === 'string' ? JSON.parse(subtasks) : subtasks) 
+    : undefined;
+
   const updateData: any = { 
     title, 
     description, 
@@ -75,6 +82,9 @@ export const updateTask = asyncHandler(async (req: AuthRequest, res: Response) =
     priority,
     dueDate: dueDate || null
   };
+  if (parsedSubtasks !== undefined) {
+    updateData.subtasks = parsedSubtasks;
+  }
   if (req.user?.role === 'admin' && userId) updateData.userId = userId;
   if (req.file) updateData.fileUrl = req.file.path;
 

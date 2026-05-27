@@ -17,6 +17,12 @@ import { useDraggable } from '@dnd-kit/core';
 import { Pencil, Trash2, Clock, CalendarDays, Paperclip } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
+interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 interface Task {
   id: string;
   title: string;
@@ -25,6 +31,7 @@ interface Task {
   priority: 'low' | 'medium' | 'high';
   dueDate?: string;
   fileUrl?: string;
+  subtasks?: Subtask[];
 }
 
 interface KanbanBoardProps {
@@ -32,6 +39,7 @@ interface KanbanBoardProps {
   onTaskMove: (taskId: string, newStatus: Task['status']) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onToggleSubtask?: (taskId: string, subtaskId: string) => void;
 }
 
 const COLUMNS = [
@@ -46,7 +54,7 @@ const priorityWeight = {
   low: 1
 };
 
-export default function KanbanBoard({ tasks, onTaskMove, onEdit, onDelete }: KanbanBoardProps) {
+export default function KanbanBoard({ tasks, onTaskMove, onEdit, onDelete, onToggleSubtask }: KanbanBoardProps) {
   const [activeTask, setActiveTask] = React.useState<Task | null>(null);
   const { t, language } = useLanguage();
 
@@ -121,6 +129,7 @@ export default function KanbanBoard({ tasks, onTaskMove, onEdit, onDelete }: Kan
             tasks={groupedTasks[col.id]} 
             onEdit={onEdit}
             onDelete={onDelete}
+            onToggleSubtask={onToggleSubtask}
             t={t}
             language={language}
           />
@@ -128,13 +137,13 @@ export default function KanbanBoard({ tasks, onTaskMove, onEdit, onDelete }: Kan
       </div>
 
       <DragOverlay>
-        {activeTask ? <TaskCard task={activeTask} onEdit={onEdit} onDelete={onDelete} t={t} language={language} isOverlay /> : null}
+        {activeTask ? <TaskCard task={activeTask} onEdit={onEdit} onDelete={onDelete} onToggleSubtask={onToggleSubtask} t={t} language={language} isOverlay /> : null}
       </DragOverlay>
     </DndContext>
   );
 }
 
-function DroppableColumn({ id, title, tasks, onEdit, onDelete, t, language }: { id: string, title: string, tasks: Task[], onEdit: any, onDelete: any, t: any, language: string }) {
+function DroppableColumn({ id, title, tasks, onEdit, onDelete, onToggleSubtask, t, language }: { id: string, title: string, tasks: Task[], onEdit: any, onDelete: any, onToggleSubtask: any, t: any, language: string }) {
   const { setNodeRef } = useDroppable({ id });
 
   return (
@@ -148,7 +157,7 @@ function DroppableColumn({ id, title, tasks, onEdit, onDelete, t, language }: { 
       
       <div className="flex flex-col gap-4 flex-1">
         {tasks.map(task => (
-          <DraggableTask key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} t={t} language={language} />
+          <DraggableTask key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} onToggleSubtask={onToggleSubtask} t={t} language={language} />
         ))}
         {tasks.length === 0 && (
           <div className="flex-1 border-2 border-dashed border-white/5 rounded-xl flex items-center justify-center p-6">
@@ -160,7 +169,7 @@ function DroppableColumn({ id, title, tasks, onEdit, onDelete, t, language }: { 
   );
 }
 
-function DraggableTask({ task, onEdit, onDelete, t, language }: { task: Task, onEdit: any, onDelete: any, t: any, language: string }) {
+function DraggableTask({ task, onEdit, onDelete, onToggleSubtask, t, language }: { task: Task, onEdit: any, onDelete: any, onToggleSubtask: any, t: any, language: string }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
   });
@@ -181,12 +190,12 @@ function DraggableTask({ task, onEdit, onDelete, t, language }: { task: Task, on
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <TaskCard task={task} onEdit={onEdit} onDelete={onDelete} t={t} language={language} />
+      <TaskCard task={task} onEdit={onEdit} onDelete={onDelete} onToggleSubtask={onToggleSubtask} t={t} language={language} />
     </div>
   );
 }
 
-function TaskCard({ task, onEdit, onDelete, t, language, isOverlay }: { task: Task, onEdit: any, onDelete: any, t: any, language: string, isOverlay?: boolean }) {
+function TaskCard({ task, onEdit, onDelete, onToggleSubtask, t, language, isOverlay }: { task: Task, onEdit: any, onDelete: any, onToggleSubtask: any, t: any, language: string, isOverlay?: boolean }) {
   const getDueDateColor = () => {
     if (!task.dueDate) return 'text-slate-500';
     const today = new Date();
@@ -249,6 +258,51 @@ function TaskCard({ task, onEdit, onDelete, t, language, isOverlay }: { task: Ta
           {t('no_description')}
         </p>
       )}
+
+      {/* Progress & Checklist rendering inside the card */}
+      {task.subtasks && task.subtasks.length > 0 && (() => {
+        const total = task.subtasks.length;
+        const completed = task.subtasks.filter(s => s.completed).length;
+        const percent = Math.round((completed / total) * 100);
+
+        return (
+          <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/5">
+            <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
+              <span>{t('progress_subtasks', { completed, total })}</span>
+              <span className="font-semibold text-indigo-400">{percent}%</span>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-950 rounded-full h-1 overflow-hidden">
+              <div 
+                className="bg-indigo-500 h-full rounded-full transition-all duration-300"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+
+            {/* Checklist */}
+            <div className="space-y-1.5 mt-1 max-h-[120px] overflow-y-auto pr-1">
+              {task.subtasks.map(sub => (
+                <label 
+                  key={sub.id} 
+                  className="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-white text-xs select-none p-0.5 rounded hover:bg-white/5 transition-colors"
+                  onPointerDown={e => e.stopPropagation()} // Stop drag propagation!
+                >
+                  <input
+                    type="checkbox"
+                    checked={sub.completed}
+                    onChange={() => onToggleSubtask && onToggleSubtask(task.id, sub.id)}
+                    className="w-3.5 h-3.5 rounded border-white/10 text-indigo-500 bg-slate-950 focus:ring-indigo-500 focus:ring-offset-0 cursor-pointer"
+                  />
+                  <span className={sub.completed ? 'line-through text-slate-500' : ''}>
+                    {sub.title}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="flex items-center justify-between mt-2 pt-3 border-t border-white/5">
         <div className={`flex items-center gap-1.5 text-xs font-medium ${getDueDateColor()}`}>

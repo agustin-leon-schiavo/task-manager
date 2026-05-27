@@ -21,6 +21,12 @@ import KanbanBoard from '@/components/KanbanBoard';
 import { useLanguage } from '@/context/LanguageContext';
 import { Globe } from 'lucide-react';
 
+interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 interface Task {
   id: string;
   title: string;
@@ -29,6 +35,7 @@ interface Task {
   priority: 'low' | 'medium' | 'high';
   dueDate?: string;
   fileUrl?: string;
+  subtasks?: Subtask[];
 }
 
 export default function Dashboard() {
@@ -80,13 +87,64 @@ export default function Dashboard() {
 
   const handleTaskMove = async (taskId: string, newStatus: Task['status']) => {
     // Actualización optimista
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const updatedSubtasks = newStatus === 'done' && t.subtasks?.length
+        ? t.subtasks.map(s => ({ ...s, completed: true }))
+        : t.subtasks;
+      return { ...t, status: newStatus, subtasks: updatedSubtasks };
+    }));
     
     try {
-      await api.put(`/tasks/${taskId}`, { status: newStatus });
+      const task = tasks.find(t => t.id === taskId);
+      const payload: any = { status: newStatus };
+      if (newStatus === 'done' && task?.subtasks?.length) {
+        payload.subtasks = task.subtasks.map(s => ({ ...s, completed: true }));
+      }
+      await api.put(`/tasks/${taskId}`, payload);
     } catch (error) {
       console.error('Error updating task status:', error);
       fetchTasks(); // Revertir en caso de error
+    }
+  };
+
+  const handleToggleSubtask = async (taskId: string, subtaskId: string) => {
+    let updatedTask: Task | null = null;
+    
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        const updatedSubtasks = (t.subtasks || []).map(s => 
+          s.id === subtaskId ? { ...s, completed: !s.completed } : s
+        );
+        const completedCount = updatedSubtasks.filter(s => s.completed).length;
+        let newStatus: Task['status'];
+        if (completedCount === updatedSubtasks.length) {
+          newStatus = 'done';
+        } else if (completedCount > 0) {
+          newStatus = 'in-progress';
+        } else {
+          newStatus = 'todo';
+        }
+        updatedTask = { 
+          ...t, 
+          subtasks: updatedSubtasks,
+          status: newStatus
+        };
+        return updatedTask;
+      }
+      return t;
+    }));
+
+    if (!updatedTask) return;
+
+    try {
+      await api.put(`/tasks/${taskId}`, { 
+        subtasks: (updatedTask as Task).subtasks,
+        status: (updatedTask as Task).status
+      });
+    } catch (error) {
+      console.error('Error updating subtask status:', error);
+      fetchTasks();
     }
   };
 
@@ -209,6 +267,7 @@ export default function Dashboard() {
             onTaskMove={handleTaskMove}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onToggleSubtask={handleToggleSubtask}
           />
         )}
       </div>

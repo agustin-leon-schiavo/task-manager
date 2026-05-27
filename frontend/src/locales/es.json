@@ -38,5 +38,8 @@
   "confirm_trash": "¿Mover esta tarea a la papelera?",
   "error_create": "Hubo un error al crear la tarea",
   "modal_due_date": "Fecha de vencimiento",
-  "no_due_date": "Sin fecha"
+  "no_due_date": "Sin fecha",
+  "modal_subtasks": "Subtareas",
+  "modal_subtasks_placeholder": "Añadir una subtarea...",
+  "progress_subtasks": "{completed} de {total} completadas"
 }

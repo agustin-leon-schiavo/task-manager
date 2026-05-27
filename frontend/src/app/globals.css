@@ -36,7 +36,7 @@ button, a, select {
 }
 
 /* Premium Inputs */
-input {
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
   @apply w-full px-4 py-3 bg-slate-950 border border-white/10 rounded-xl text-white text-base transition-all duration-300;
 }
 

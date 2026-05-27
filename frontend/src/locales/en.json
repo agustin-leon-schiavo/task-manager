@@ -38,5 +38,8 @@
   "confirm_trash": "Move this task to the trash?",
   "error_create": "There was an error creating the task",
   "modal_due_date": "Due Date",
-  "no_due_date": "No due date"
+  "no_due_date": "No due date",
+  "modal_subtasks": "Subtasks",
+  "modal_subtasks_placeholder": "Add a subtask...",
+  "progress_subtasks": "{completed} of {total} completed"
 }

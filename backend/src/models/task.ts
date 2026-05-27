@@ -28,6 +28,10 @@ export class Task extends Model {
   @Column(DataType.DATEONLY)
   dueDate?: string;
 
+  @Default([])
+  @Column(DataType.JSONB)
+  subtasks!: { id: string; title: string; completed: boolean }[];
+
   @ForeignKey(() => User)
   @Column(DataType.UUID)
   userId!: string;

@@ -5,6 +5,12 @@ import api from '@/services/api';
 import { X, Upload, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
+interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 interface Task {
   id: string;
   title: string;
@@ -12,6 +18,7 @@ interface Task {
   priority: 'low' | 'medium' | 'high';
   status: 'todo' | 'in-progress' | 'done';
   dueDate?: string;
+  subtasks?: Subtask[];
 }
 
 interface TaskModalProps {
@@ -27,6 +34,8 @@ export default function TaskModal({ isOpen, onClose, onTaskCreated, taskToEdit }
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [status, setStatus] = useState<'todo' | 'in-progress' | 'done'>('todo');
   const [dueDate, setDueDate] = useState('');
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { t } = useLanguage();
@@ -39,12 +48,16 @@ export default function TaskModal({ isOpen, onClose, onTaskCreated, taskToEdit }
       setPriority(taskToEdit.priority);
       setStatus(taskToEdit.status || 'todo');
       setDueDate(taskToEdit.dueDate || '');
+      setSubtasks(taskToEdit.subtasks || []);
+      setNewSubtaskTitle('');
     } else {
       setTitle('');
       setDescription('');
       setPriority('medium');
       setStatus('todo');
       setDueDate('');
+      setSubtasks([]);
+      setNewSubtaskTitle('');
     }
   }, [taskToEdit, isOpen]);
 
@@ -61,6 +74,7 @@ export default function TaskModal({ isOpen, onClose, onTaskCreated, taskToEdit }
       formData.append('priority', priority);
       formData.append('status', status);
       if (dueDate) formData.append('dueDate', dueDate);
+      formData.append('subtasks', JSON.stringify(subtasks));
       
       if (file) {
         formData.append('file', file);
@@ -86,6 +100,17 @@ export default function TaskModal({ isOpen, onClose, onTaskCreated, taskToEdit }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleAddSubtask = () => {
+    if (!newSubtaskTitle.trim()) return;
+    const newSub: Subtask = {
+      id: crypto.randomUUID(),
+      title: newSubtaskTitle.trim(),
+      completed: false
+    };
+    setSubtasks([...subtasks, newSub]);
+    setNewSubtaskTitle('');
   };
 
   return (
@@ -124,6 +149,69 @@ export default function TaskModal({ isOpen, onClose, onTaskCreated, taskToEdit }
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('modal_desc_placeholder')}
             />
+          </div>
+
+          {/* Subtasks Section */}
+          <div className="border-t border-white/5 pt-5">
+            <label className="block text-sm font-medium text-slate-400 mb-3">{t('modal_subtasks')}</label>
+            
+            {subtasks.length > 0 && (
+              <div className="space-y-2 mb-3 max-h-[180px] overflow-y-auto pr-1">
+                {subtasks.map((sub) => (
+                  <div 
+                    key={sub.id} 
+                    className="flex items-center gap-2 bg-slate-950/40 p-2.5 rounded-xl border border-white/5"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={sub.completed}
+                      onChange={() => {
+                        setSubtasks(subtasks.map(s => s.id === sub.id ? { ...s, completed: !s.completed } : s));
+                      }}
+                      className="w-4 h-4 rounded border-white/10 text-indigo-500 bg-slate-950 focus:ring-indigo-500 focus:ring-offset-0 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={sub.title}
+                      onChange={(e) => {
+                        setSubtasks(subtasks.map(s => s.id === sub.id ? { ...s, title: e.target.value } : s));
+                      }}
+                      className="flex-1 !bg-transparent !border-none !p-0 text-sm text-white focus:!ring-0 focus:!outline-none placeholder-slate-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSubtasks(subtasks.filter(s => s.id !== sub.id))}
+                      className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newSubtaskTitle}
+                onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddSubtask();
+                  }
+                }}
+                placeholder={t('modal_subtasks_placeholder')}
+                className="flex-1 text-sm bg-slate-950/60"
+              />
+              <button
+                type="button"
+                onClick={handleAddSubtask}
+                className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold transition-all"
+              >
+                +
+              </button>
+            </div>
           </div>
 
           <div>
