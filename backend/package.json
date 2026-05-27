@@ -30,6 +30,7 @@
     "pg-hstore": "^2.3.4",
     "reflect-metadata": "^0.2.2",
     "sequelize": "^6.37.8",
+    "sequelize-cli": "^6.6.5",
     "sequelize-typescript": "^2.1.6",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
