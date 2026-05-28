@@ -29,6 +29,16 @@ export class User extends Model {
   @Column(DataType.ENUM('user', 'admin'))
   role!: 'user' | 'admin';
 
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  isVerified!: boolean;
+
+  @Column(DataType.STRING)
+  verificationCode?: string;
+
+  @Column(DataType.DATE)
+  verificationCodeExpires?: Date;
+
   @HasMany(() => Task)
   tasks!: Task[];
 
