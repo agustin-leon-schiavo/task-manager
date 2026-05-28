@@ -3,14 +3,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const smtpPort = parseInt(process.env.SMTP_PORT || '587');
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || '',
-  port: parseInt(process.env.SMTP_PORT || '587'),
+  port: smtpPort,
+  secure: smtpPort === 465,
   auth: {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
   },
-});
+  family: 4, // Forzar IPv4 (Render no soporta IPv6)
+} as nodemailer.TransportOptions);
 
 export const sendVerificationEmail = async (email: string, code: string): Promise<boolean> => {
   // Siempre loguear en consola para facilitar el desarrollo local
