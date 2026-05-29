@@ -3,18 +3,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const smtpPort = parseInt(process.env.SMTP_PORT || '587');
-
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || '',
-  port: smtpPort,
-  secure: smtpPort === 465,
+  port: parseInt(process.env.SMTP_PORT || '587'),
   auth: {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
   },
-  family: 4, // Forzar IPv4 (Render no soporta IPv6)
-} as nodemailer.TransportOptions);
+});
 
 export const sendVerificationEmail = async (email: string, code: string): Promise<boolean> => {
   // Siempre loguear en consola para facilitar el desarrollo local
@@ -30,7 +26,7 @@ export const sendVerificationEmail = async (email: string, code: string): Promis
   }
 
   const mailOptions = {
-    from: `"Task Manager" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+    from: `"Task Manager" <${process.env.SMTP_FROM}>`,
     to: email,
     subject: 'Código de verificación de tu cuenta',
     html: `
