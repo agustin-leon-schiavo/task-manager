@@ -1,4 +1,4 @@
-import { Table, Model, Column, DataType, PrimaryKey, Default, Unique, HasMany, BeforeCreate, BeforeUpdate } from 'sequelize-typescript';
+import { Table, Model, Column, DataType, PrimaryKey, Default, Unique, HasMany, ForeignKey, BelongsTo, BeforeCreate, BeforeUpdate } from 'sequelize-typescript';
 import { Task } from './task';
 import bcrypt from 'bcryptjs';
 
@@ -38,6 +38,16 @@ export class User extends Model {
 
   @Column(DataType.DATE)
   verificationCodeExpires?: Date;
+
+  @ForeignKey(() => User)
+  @Column(DataType.UUID)
+  adminId?: string | null;
+
+  @BelongsTo(() => User)
+  admin?: User;
+
+  @HasMany(() => User)
+  subordinates!: User[];
 
   @HasMany(() => Task)
   tasks!: Task[];

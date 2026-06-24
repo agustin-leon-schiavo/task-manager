@@ -14,9 +14,11 @@ import {
   CheckCircle2, 
   Clock,
   Paperclip,
-  Pencil
+  Pencil,
+  Users
 } from 'lucide-react';
 import TaskModal from '@/components/TaskModal';
+import TeamModal from '@/components/TeamModal';
 import KanbanBoard from '@/components/KanbanBoard';
 import { useLanguage } from '@/context/LanguageContext';
 import { Globe } from 'lucide-react';
@@ -46,6 +48,9 @@ export default function Dashboard() {
   const [fetching, setFetching] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [subordinates, setSubordinates] = useState<{ id: string; email: string }[]>([]);
+  const [selectedSubordinateId, setSelectedSubordinateId] = useState<string>('');
 
   const handleEdit = (task: Task) => {
     setTaskToEdit(task);
@@ -61,13 +66,25 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
 
+  const fetchSubordinates = async () => {
+    try {
+      const response = await api.get('/users/subordinates');
+      setSubordinates(response.data);
+    } catch (error) {
+      console.error('Error fetching subordinates:', error);
+    }
+  };
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     } else if (user) {
       fetchTasks();
+      if (user.role === 'admin') {
+        fetchSubordinates();
+      }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, selectedSubordinateId]);
 
   const fetchTasks = async () => {
     try {
@@ -75,6 +92,7 @@ export default function Dashboard() {
       const params: any = {};
       if (searchTerm) params.search = searchTerm;
       if (priorityFilter) params.priority = priorityFilter;
+      if (selectedSubordinateId) params.userId = selectedSubordinateId;
 
       const response = await api.get('/tasks', { params });
       setTasks(response.data);
@@ -204,6 +222,16 @@ export default function Dashboard() {
             <Plus size={20} />
             {t('new_task')}
           </button>
+          {user.role === 'admin' && (
+            <button 
+              onClick={() => setIsTeamModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 transition-all border border-white/5"
+              title={t('manage_team') || 'Gestionar Equipo'}
+            >
+              <Users size={20} />
+              <span className="font-medium hidden sm:inline">{t('manage_team') || 'Mi Equipo'}</span>
+            </button>
+          )}
           <Link 
             href="/trash"
             className="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 transition-all border border-white/5"
@@ -231,8 +259,8 @@ export default function Dashboard() {
       </header>
 
       {/* Toolbar: Buscador y Filtros */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="md:col-span-2 relative">
+      <div className={`grid grid-cols-1 ${user.role === 'admin' ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4 mb-8`}>
+        <div className={`${user.role === 'admin' ? 'md:col-span-2' : 'md:col-span-2'} relative`}>
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input 
             type="text" 
@@ -242,6 +270,25 @@ export default function Dashboard() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+
+        {user.role === 'admin' && (
+          <div className="relative">
+            <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <select 
+              className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-white/10 rounded-xl text-white appearance-none outline-none focus:border-indigo-500 transition-all"
+              value={selectedSubordinateId}
+              onChange={(e) => setSelectedSubordinateId(e.target.value)}
+            >
+              <option value="">{t('my_tasks_option') || 'Mis Tareas'}</option>
+              {subordinates.map((sub) => (
+                <option key={sub.id} value={sub.id}>
+                  {sub.email.split('@')[0]}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="relative">
           <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <select 
@@ -277,7 +324,16 @@ export default function Dashboard() {
         onClose={handleCloseModal} 
         onTaskCreated={fetchTasks}
         taskToEdit={taskToEdit}
+        activeUserId={selectedSubordinateId || undefined}
       />
+
+      {user.role === 'admin' && (
+        <TeamModal
+          isOpen={isTeamModalOpen}
+          onClose={() => setIsTeamModalOpen(false)}
+          onTeamUpdated={fetchSubordinates}
+        />
+      )}
     </div>
   );
 }

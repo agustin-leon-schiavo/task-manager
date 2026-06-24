@@ -1,9 +1,14 @@
 import { Router } from 'express';
-import { getUsers } from '../controllers/userController';
+import { getUsers, getSubordinates, assignAdmin } from '../controllers/userController';
 import { protect, authorize } from '../middlewares/authMiddleware';
 
 const router = Router();
 
-router.get('/', protect, authorize('admin'), getUsers);
+router.use(protect);
+router.use(authorize('admin'));
+
+router.get('/', getUsers);
+router.get('/subordinates', getSubordinates);
+router.put('/:id/assign-admin', assignAdmin);
 
 export default router;

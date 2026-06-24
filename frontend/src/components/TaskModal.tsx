@@ -26,9 +26,10 @@ interface TaskModalProps {
   onClose: () => void;
   onTaskCreated: () => void;
   taskToEdit?: Task | null;
+  activeUserId?: string;
 }
 
-export default function TaskModal({ isOpen, onClose, onTaskCreated, taskToEdit }: TaskModalProps) {
+export default function TaskModal({ isOpen, onClose, onTaskCreated, taskToEdit, activeUserId }: TaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
@@ -78,6 +79,10 @@ export default function TaskModal({ isOpen, onClose, onTaskCreated, taskToEdit }
       
       if (file) {
         formData.append('file', file);
+      }
+
+      if (!taskToEdit && activeUserId) {
+        formData.append('userId', activeUserId);
       }
 
       if (taskToEdit) {

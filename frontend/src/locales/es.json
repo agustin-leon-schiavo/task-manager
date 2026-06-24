@@ -41,5 +41,11 @@
   "no_due_date": "Sin fecha",
   "modal_subtasks": "Subtareas",
   "modal_subtasks_placeholder": "Añadir una subtarea...",
-  "progress_subtasks": "{completed} de {total} completadas"
+  "progress_subtasks": "{completed} de {total} completadas",
+  "manage_team": "Mi Equipo",
+  "modal_manage_team": "Gestionar Equipo",
+  "search_users_placeholder": "Buscar usuarios por email...",
+  "team_remove": "Quitar",
+  "team_add": "Añadir",
+  "my_tasks_option": "Mis Tareas"
 }

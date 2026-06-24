@@ -41,5 +41,11 @@
   "no_due_date": "No due date",
   "modal_subtasks": "Subtasks",
   "modal_subtasks_placeholder": "Add a subtask...",
-  "progress_subtasks": "{completed} of {total} completed"
+  "progress_subtasks": "{completed} of {total} completed",
+  "manage_team": "My Team",
+  "modal_manage_team": "Manage Team",
+  "search_users_placeholder": "Search users by email...",
+  "team_remove": "Remove",
+  "team_add": "Add",
+  "my_tasks_option": "My Tasks"
 }
