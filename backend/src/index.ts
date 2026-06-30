@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import taskRoutes from './routes/taskRoutes';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
+import assistantRoutes from './routes/assistantRoutes';
 import { errorHandler } from './middlewares/errorHandler';
 import { initCronJobs } from './utils/cronJobs';
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 app.get('/health', (req, res) => {
   res.send('Backend is running!');

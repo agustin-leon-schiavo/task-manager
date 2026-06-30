@@ -5,6 +5,7 @@ frontend/node_modules/
 
 # Archivos de entorno (SECRETOS)
 .env
+.antigravityignore
 backend/.env
 frontend/.env
 *.env.local

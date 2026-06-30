@@ -11,6 +11,7 @@ Un sistema profesional de gestión de tareas full-stack, construido con **Next.j
 -   **Papelera de Reciclaje**: Sistema de borrado suave (Soft Delete) con opción de restaurar.
 -   **Diseño Premium**: Interfaz moderna creada con Tailwind CSS v4, animaciones suaves y modo oscuro.
 -   **Búsqueda en Tiempo Real**: Filtros dinámicos por texto y prioridad.
+-   **Asistente de IA**: Chatbot inteligente integrado con **Google Gemini (gemini-2.5-flash)** que responde preguntas sobre tus tareas en tiempo real con historial de conversación.
 
 ## 🛠️ Tecnologías
 
@@ -25,6 +26,7 @@ Un sistema profesional de gestión de tareas full-stack, construido con **Next.j
 -   [PostgreSQL](https://www.postgresql.org/) con [Sequelize](https://sequelize.org/)
 -   [Cloudinary](https://cloudinary.com/) (Almacenamiento de archivos)
 -   [TypeScript](https://www.typescriptlang.org/)
+-   [Google Gemini API](https://ai.google.dev/) (a través de `@google/generative-ai`)
 
 ## 📁 Estructura del Proyecto
 
@@ -46,7 +48,7 @@ cd task-manager
 ```bash
 cd backend
 npm install
-# Crea un archivo .env basado en las variables necesarias
+# Crea un archivo .env basado en las variables necesarias (incluyendo GEMINI_API_KEY para el asistente de IA)
 npm run dev
 ```
 

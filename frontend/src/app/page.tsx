@@ -20,6 +20,7 @@ import {
 import TaskModal from '@/components/TaskModal';
 import TeamModal from '@/components/TeamModal';
 import KanbanBoard from '@/components/KanbanBoard';
+import ChatAssistant from '@/components/ChatAssistant';
 import { useLanguage } from '@/context/LanguageContext';
 import { Globe } from 'lucide-react';
 
@@ -334,6 +335,9 @@ export default function Dashboard() {
           onTeamUpdated={fetchSubordinates}
         />
       )}
+
+      {/* Asistente Inteligente flotante */}
+      <ChatAssistant />
     </div>
   );
 }
