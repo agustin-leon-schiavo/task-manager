@@ -129,16 +129,13 @@ export const updateTask = asyncHandler(async (req: AuthRequest, res: Response) =
     ? (typeof subtasks === 'string' ? JSON.parse(subtasks) : subtasks) 
     : undefined;
 
-  const updateData: any = { 
-    title, 
-    description, 
-    status, 
-    priority,
-    dueDate: dueDate || null
-  };
-  if (parsedSubtasks !== undefined) {
-    updateData.subtasks = parsedSubtasks;
-  }
+  const updateData: any = {};
+  if (title !== undefined) updateData.title = title;
+  if (description !== undefined) updateData.description = description;
+  if (status !== undefined) updateData.status = status;
+  if (priority !== undefined) updateData.priority = priority;
+  if (dueDate !== undefined) updateData.dueDate = dueDate || null;
+  if (parsedSubtasks !== undefined) updateData.subtasks = parsedSubtasks;
   
   if (req.user?.role === 'admin' && userId) {
     const targetUserId = await getTargetUserId(req, userId);

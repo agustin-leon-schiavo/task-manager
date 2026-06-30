@@ -128,38 +128,35 @@ export default function Dashboard() {
   };
 
   const handleToggleSubtask = async (taskId: string, subtaskId: string) => {
-    let updatedTask: Task | null = null;
-    
-    setTasks(prev => prev.map(t => {
-      if (t.id === taskId) {
-        const updatedSubtasks = (t.subtasks || []).map(s => 
-          s.id === subtaskId ? { ...s, completed: !s.completed } : s
-        );
-        const completedCount = updatedSubtasks.filter(s => s.completed).length;
-        let newStatus: Task['status'];
-        if (completedCount === updatedSubtasks.length) {
-          newStatus = 'done';
-        } else if (completedCount > 0) {
-          newStatus = 'in-progress';
-        } else {
-          newStatus = 'todo';
-        }
-        updatedTask = { 
-          ...t, 
-          subtasks: updatedSubtasks,
-          status: newStatus
-        };
-        return updatedTask;
-      }
-      return t;
-    }));
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
 
-    if (!updatedTask) return;
+    const updatedSubtasks = (task.subtasks || []).map(s => 
+      s.id === subtaskId ? { ...s, completed: !s.completed } : s
+    );
+    const completedCount = updatedSubtasks.filter(s => s.completed).length;
+    let newStatus: Task['status'];
+    if (completedCount === updatedSubtasks.length) {
+      newStatus = 'done';
+    } else if (completedCount > 0) {
+      newStatus = 'in-progress';
+    } else {
+      newStatus = 'todo';
+    }
+
+    const updatedTask: Task = { 
+      ...task, 
+      subtasks: updatedSubtasks,
+      status: newStatus
+    };
+
+    // Actualización optimista del estado
+    setTasks(prev => prev.map(t => t.id === taskId ? updatedTask : t));
 
     try {
       await api.put(`/tasks/${taskId}`, { 
-        subtasks: (updatedTask as Task).subtasks,
-        status: (updatedTask as Task).status
+        subtasks: updatedTask.subtasks,
+        status: updatedTask.status
       });
     } catch (error) {
       console.error('Error updating subtask status:', error);
